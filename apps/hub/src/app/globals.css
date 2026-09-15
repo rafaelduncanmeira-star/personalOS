@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* Identidade Geri Hub: verde profundo + âmbar. Tokens definidos uma vez e usados por papel. */
+:root {
+  color-scheme: dark;
+  --bg: #0b1f19;            /* plano da página */
+  --surface: #0f2a22;       /* cartões e gráficos */
+  --surface-2: #133427;     /* tabelas / hover */
+  --sidebar: #0d4a3a;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --ink: #f4f7f5;
+  --ink-2: #b8c9c1;
+  --ink-3: #7f978c;
+  --brand: #f5a800;         /* âmbar da marca (ações, destaque) */
+  --brand-ink: #1a1400;
+  --accent: #2ec4a0;        /* verde-água (positivo) */
+
+  /* Séries de gráficos — validadas (CVD/contraste) contra --surface */
+  --series-1: #c98500;
+  --series-2: #199e70;
+  --series-3: #3987e5;
+  --series-4: #d55181;
+  --series-muted: #3b5a4d;
+
+  /* Status (sempre com ícone + rótulo, nunca só cor) */
+  --good: #2ec4a0;
+  --warn: #f5a800;
+  --bad: #ff7a59;
+
+  --grid: rgba(255, 255, 255, 0.07);
+  --axis: rgba(255, 255, 255, 0.22);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sidebar: var(--sidebar);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-accent: var(--accent);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.eyebrow { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.tnum { font-variant-numeric: tabular-nums; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid currentColor; }
+.pill-good { color: var(--good); }
+.pill-warn { color: var(--warn); }
+.pill-bad { color: var(--bad); }
+
+table.data { width: 100%; border-collapse: collapse; }
+table.data th { text-align: left; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line-strong); white-space: nowrap; }
+table.data td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--ink-2); font-size: 14px; }
+.nav-link:hover { background: rgba(255,255,255,0.06); color: var(--ink); }
+.nav-link[aria-current="page"] { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.btn-brand { background: var(--brand); color: var(--brand-ink); }
+.btn-ghost { border: 1px solid var(--line-strong); color: var(--ink-2); }
+.btn-ghost:hover { color: var(--ink); border-color: var(--ink-3); }
