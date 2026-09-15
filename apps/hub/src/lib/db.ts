@@ -3,16 +3,18 @@ import postgres from "postgres";
 // Conexão direta ao Postgres (Supabase pooler em produção, Postgres local em dev).
 // O app roda só no servidor (server components) e faz a checagem de papel na aplicação;
 // as policies de RLS no schema `hub` continuam valendo para acessos via PostgREST.
-const url = process.env.DATABASE_URL;
-if (!url) throw new Error("DATABASE_URL não definida");
+// A conexão é criada de forma preguiçosa para o build não depender de DATABASE_URL.
+
+type Sql = ReturnType<typeof postgres>;
 
 declare global {
-  var __hubSql: ReturnType<typeof postgres> | undefined;
+  var __hubSql: Sql | undefined;
 }
 
-export const sql =
-  globalThis.__hubSql ??
-  postgres(url, {
+function connect(): Sql {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL não definida. Configure a variável de ambiente (pooler do Supabase em produção).");
+  const client = postgres(url, {
     max: 5,
     idle_timeout: 20,
     prepare: false, // compatível com o pooler do Supabase em modo transaction
@@ -22,5 +24,20 @@ export const sql =
       int8: { to: 20, from: [20], serialize: (x: number) => String(x), parse: parseInt },
     },
   });
+  if (process.env.NODE_ENV !== "production") globalThis.__hubSql = client;
+  return client;
+}
 
-if (process.env.NODE_ENV !== "production") globalThis.__hubSql = sql;
+function getSql(): Sql {
+  return globalThis.__hubSql ?? connect();
+}
+
+/** Tagged template: sql`select ...`. Tipos genéricos iguais aos do `postgres`. */
+export const sql = new Proxy(function () {} as unknown as Sql, {
+  apply(_t, _this, args: unknown[]) {
+    return (getSql() as unknown as (...a: unknown[]) => unknown)(...args);
+  },
+  get(_t, prop) {
+    return (getSql() as unknown as Record<string | symbol, unknown>)[prop];
+  },
+}) as Sql;

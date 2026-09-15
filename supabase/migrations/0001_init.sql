@@ -883,7 +883,7 @@ alter default privileges in schema hub grant all on tables to service_role;
 insert into hub.integrations (source, display_name, mode, enabled) values
   ('guru',      'Digital Manager Guru (checkout)',      'webhook', false),
   ('asaas',     'Asaas (meio de pagamento)',            'api',     false),
-  ('vump',      'VUMP / Anhanguera (pós-graduação)',    'import',  false),
+  ('vump',      'Voomp / Anhanguera (pós-graduação)',   'import',  false),
   ('curseduca', 'Curseduca (área de membros)',          'api',     false),
   ('geritools', 'GeriTools (Supabase)',                 'api',     false),
   ('clint',     'Clint (CRM comercial)',                'api',     false),
