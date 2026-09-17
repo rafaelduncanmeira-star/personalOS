@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionEmail } from "@/lib/auth";
 import { integrations, listProducts } from "@/lib/queries";
 import { MobileNav, Sidebar } from "@/components/shell";
 
@@ -8,7 +8,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) {
+    const email = await getSessionEmail();
+    redirect(email ? "/sem-acesso" : "/login");
+  }
   const [products, sources] = await Promise.all([listProducts(), integrations()]);
   return (
     <>

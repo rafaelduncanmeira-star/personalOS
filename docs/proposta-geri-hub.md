@@ -17,7 +17,7 @@
  Conta Azul ─API┘
 ```
 
-- **Banco**: projeto Supabase dedicado ao hub (não o do GeriTools), schema `hub`. As regras de negócio (DRE, rateio, MRR, ROAS) vivem em views SQL, então qualquer ferramenta (o app, uma planilha, um agente) lê os mesmos números.
+- **Banco**: schema `hub` dentro do projeto Supabase já existente da GeriClass (sem custo adicional). As regras de negócio (DRE, rateio, MRR, ROAS) vivem em views SQL, então qualquer ferramenta (o app, uma planilha, um agente) lê os mesmos números. A leitura pelo app passa por funções `public.hub_*` chamadas com a sessão do usuário, então a RLS por papel vale de ponta a ponta e a Vercel não guarda nenhum segredo.
 - **Sincronizações**: Supabase Edge Functions em `supabase/functions/`, uma por fonte, chamadas pelo `pg_cron` (horária para vendas/mídia/CRM, diária para financeiro). Guru e Voomp chegam por webhook em tempo real. Cada execução registra em `hub.sync_runs` (status, linhas, erro) e aparece na página Integrações.
 - **App**: Next.js 16 (App Router, server components) em `apps/hub`, lê o banco direto e aplica o papel do usuário. Sem estado no cliente além dos gráficos.
 - **Hospedagem**: Vercel (projeto `geri-hub`, como os demais projetos da conta) com subdomínio no Cloudflare.
@@ -110,6 +110,6 @@ end $$;
 ## 7. Decisões em aberto (precisam de você)
 
 1. Nome do subdomínio (`hub.gericlass.com.br`?).
-2. Criar o projeto Supabase do hub na organização "GeriClass" (custo: plano free cobre a V1; Pro se o pg_cron/edge functions exigirem).
+2. No Supabase, *Authentication → URL Configuration*: Site URL com o endereço do hub na Vercel (único ajuste que a API não permite fazer por mim).
 3. Credenciais e acessos listados em `docs/integracoes.md`.
 4. Percentual da Anhanguera/Voomp e ISS para fechar a DRE.

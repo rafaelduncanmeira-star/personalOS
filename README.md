@@ -4,36 +4,41 @@ Painel de gestão da GeriClass: vendas, caixa, tráfego, alunos, comercial e DRE
 
 ```
 apps/hub/                 Next.js 16 (App Router) — o painel
-supabase/migrations/      schema `hub` (tabelas, views analíticas, RLS)
+supabase/migrations/      schema `hub` (tabelas, views, RLS), agendamentos e a camada de leitura em `public.hub_*`
 supabase/seed_demo.sql    dados ilustrativos para desenvolvimento
-supabase/functions/       sincronizações (Guru, Asaas, Meta, Google, Curseduca, Clint, Conta Azul)
-docs/                     proposta, regras da DRE, integrações
+supabase/functions/       sincronizações (Guru, Voomp, Asaas, Curseduca, GeriTools, Clint, Meta, Google, Conta Azul)
+docs/                     proposta, integrações, mensagem para o gestor
 ```
+
+## Como funciona em produção
+
+- **Banco**: schema `hub` dentro do projeto Supabase da GeriClass (`ogwepzrwmywnubfgndpn`, sem custo extra).
+- **Leitura**: o app chama funções `public.hub_*` via PostgREST com a sessão do usuário. RLS por papel (`hub.users.role`). Nenhum segredo fica na Vercel; URL e chave publicável são públicas e estão em `apps/hub/src/lib/supabase-config.ts`.
+- **Login**: magic link do Supabase Auth. Só e-mails cadastrados em `hub.users` entram; os demais caem em `/sem-acesso`.
+- **App**: Vercel, projeto `geri-hub`, raiz `apps/hub`, deploy a cada push na branch de produção.
+- **Sincronizações**: Edge Functions agendadas por `pg_cron` (pausadas até as chaves existirem).
 
 ## Rodar local
 
-Pré-requisitos: Node 22, pnpm, Postgres 16 (ou um projeto Supabase).
+Pré-requisitos: Node 22, pnpm, Postgres 16.
 
 ```bash
-# 1. banco local com o schema + dados demo
 createdb hubtest
 psql hubtest -f supabase/migrations/0001_init.sql
+psql hubtest -f supabase/migrations/0002_cron_and_verdict.sql   # precisa de um stub de net.http_post fora do Supabase
+psql hubtest -f supabase/migrations/0003_public_rpc.sql
 psql hubtest -f supabase/seed_demo.sql
 
-# 2. app
-cd apps/hub
-cp .env.example .env.local     # ajuste DATABASE_URL; HUB_AUTH_MODE=dev dispensa login
-pnpm install
-pnpm dev
+cd apps/hub && cp .env.example .env.local && pnpm install && pnpm dev
 ```
 
-No Postgres local (fora do Supabase) crie antes um shim de `auth.uid()` e dos papéis `authenticated`/`service_role`; veja `docs/proposta-geri-hub.md` → "Ambiente local".
+Fora do Supabase, crie antes os stubs de `auth.uid()`, `auth.jwt()` e os papéis `authenticated`, `anon`, `service_role` (ver `docs/proposta-geri-hub.md` → "Ambiente local").
 
-## Produção (resumo)
+## Dar acesso a alguém
 
-- Banco: projeto Supabase dedicado ao hub (separado do GeriTools). Aplicar `supabase/migrations`.
-- App: Vercel, projeto `geri-hub`, apontando para `apps/hub`. Variáveis conforme `apps/hub/.env.example`.
-- Domínio: subdomínio no Cloudflare (ex.: `hub.gericlass.com.br`) com CNAME para a Vercel.
-- Login: Supabase Auth por magic link; só e-mails presentes em `hub.users` entram, com papel (admin, gestor, comercial, tráfego, financeiro).
+```sql
+insert into hub.users (email, name, role) values ('pessoa@gericlass.com.br', 'Nome', 'gestor');
+-- papéis: admin, gestor, comercial, trafego, financeiro, leitura
+```
 
-Detalhes, decisões e roadmap: `docs/proposta-geri-hub.md`.
+Detalhes, decisões e roadmap: `docs/proposta-geri-hub.md`. Integrações: `docs/integracoes.md`.
