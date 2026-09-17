@@ -18,6 +18,7 @@ export const env = (k: string, fallback?: string) => {
  * (função public.hub_secret, só executável pela service role). Permite cadastrar chaves por SQL.
  */
 export async function secret(name: string): Promise<string> {
+  if (!name.startsWith("HUB_")) throw new Error(`segredo ${name}: use o prefixo HUB_ (o projeto é compartilhado com o GeriTools)`);
   const fromEnv = Deno.env.get(name);
   if (fromEnv) return fromEnv;
   const { data, error } = await db.schema("public").rpc("hub_secret", { p_name: name });

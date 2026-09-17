@@ -1,5 +1,5 @@
 // Curseduca → hub.enrollments (aluno ativo = situação ACTIVE + acesso vigente no grupo mapeado a um produto)
-import { db, env, fetchJson, productIdFor, upsertCustomer, withRun } from "../_shared/hub.ts";
+import { db, env, fetchJson, productIdFor, upsertCustomer, withRun, secret } from "../_shared/hub.ts";
 
 type Group = { id: number | string; uuid: string; name: string; expirationType?: string | null; expirationInterval?: number | null };
 type MemberGroup = { uuid?: string; id?: number | string; name?: string; enteredAt?: string; expiresAt?: string | null; customExpirationDate?: string | null; createdAt?: string };
@@ -9,7 +9,7 @@ type Member = {
 };
 
 const base = env("CURSEDUCA_BASE_URL", "https://prof.curseduca.pro"); // confirmar no Swagger da conta
-const headers = { api_key: env("CURSEDUCA_API_KEY"), accept: "application/json" };
+const headers = { api_key: (await secret("HUB_CURSEDUCA_API_KEY")), accept: "application/json" };
 
 async function* members() {
   let offset = 0;

@@ -1,5 +1,5 @@
 // Asaas → hub.payments (caixa). Janela: ?from&to (default últimos 3 dias, por data de pagamento e por data de criação).
-import { db, env, fetchJson, normEmail, productIdFor, round2, withRun, window } from "../_shared/hub.ts";
+import { db, env, fetchJson, normEmail, productIdFor, round2, withRun, window, secret } from "../_shared/hub.ts";
 
 type Payment = {
   id: string; customer: string; value: number; netValue: number; originalValue?: number | null; status: string;
@@ -8,7 +8,7 @@ type Payment = {
 };
 
 const base = env("ASAAS_BASE_URL", "https://api.asaas.com/v3");
-const headers = { access_token: env("ASAAS_API_KEY"), accept: "application/json" };
+const headers = { access_token: (await secret("HUB_ASAAS_API_KEY")), accept: "application/json" };
 const statusMap: Record<string, string> = {
   PENDING: "pending", RECEIVED: "received", CONFIRMED: "received", RECEIVED_IN_CASH: "received",
   OVERDUE: "overdue", REFUNDED: "refunded", REFUND_REQUESTED: "refunded", REFUND_IN_PROGRESS: "refunded",

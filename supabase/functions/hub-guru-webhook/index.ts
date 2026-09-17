@@ -80,7 +80,7 @@ async function handleSubscription(s: Any) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
-  if (new URL(req.url).searchParams.get("token") !== (await secret("GURU_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
+  if (new URL(req.url).searchParams.get("token") !== (await secret("HUB_GURU_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
   const body = (await req.json()) as Any;
   try {
     const kind = body.webhook_type ?? (body.subscription_code ? "subscription" : "transaction");

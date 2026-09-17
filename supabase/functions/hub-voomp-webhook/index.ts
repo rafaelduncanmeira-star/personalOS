@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   const u = new URL(req.url);
   const token = u.searchParams.get("token") ?? req.headers.get("x-voomp-token") ?? req.headers.get("token");
-  if (token !== (await secret("VOOMP_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
+  if (token !== (await secret("HUB_VOOMP_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
   const body = (await req.json()) as Any;
   try {
     const sale = body.data ?? body.sale ?? body.transaction ?? body;

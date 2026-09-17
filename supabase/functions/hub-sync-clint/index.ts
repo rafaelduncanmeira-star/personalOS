@@ -1,10 +1,10 @@
 // Clint CRM → hub.pipelines / pipeline_stages / deals / deal_stage_events / leads
 // Requer plano Elite (chave em Conta → API). Base https://api.clint.digital, header api-token.
-import { db, env, fetchJson, upsertCustomer, withRun, window } from "../_shared/hub.ts";
+import { db, env, fetchJson, upsertCustomer, withRun, window, secret } from "../_shared/hub.ts";
 
 type Any = Record<string, any>;
 const base = env("CLINT_BASE_URL", "https://api.clint.digital");
-const headers = { "api-token": env("CLINT_API_TOKEN"), accept: "application/json" };
+const headers = { "api-token": (await secret("HUB_CLINT_API_TOKEN")), accept: "application/json" };
 
 async function* paged(path: string, params: Record<string, string> = {}) {
   let page = 1;

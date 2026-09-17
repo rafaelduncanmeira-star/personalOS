@@ -1,18 +1,18 @@
 // Conta Azul (API v2, OAuth 2.0) → hub.cost_entries (contas a pagar por competência)
 // Token: o refresh_token vem da autorização inicial (uma vez) e é guardado como segredo da função.
 // TODO(V3): rotacionar o refresh_token via Supabase Vault quando a Conta Azul devolver um novo.
-import { db, env, fetchJson, round2, withRun, window } from "../_shared/hub.ts";
+import { db, env, fetchJson, round2, withRun, window, secret } from "../_shared/hub.ts";
 
 type Any = Record<string, any>;
 const base = env("CONTAAZUL_BASE_URL", "https://api-v2.contaazul.com");
 
 async function accessToken() {
-  const basic = btoa(`${env("CONTAAZUL_CLIENT_ID")}:${env("CONTAAZUL_CLIENT_SECRET")}`);
-  const body = new URLSearchParams({ grant_type: "refresh_token", refresh_token: env("CONTAAZUL_REFRESH_TOKEN") });
+  const basic = btoa(`${(await secret("HUB_CONTAAZUL_CLIENT_ID"))}:${(await secret("HUB_CONTAAZUL_CLIENT_SECRET"))}`);
+  const body = new URLSearchParams({ grant_type: "refresh_token", refresh_token: (await secret("HUB_CONTAAZUL_REFRESH_TOKEN")) });
   const r = await fetchJson<{ access_token: string; refresh_token?: string }>("https://auth.contaazul.com/oauth2/token", {
     method: "POST", body, headers: { authorization: `Basic ${basic}`, "content-type": "application/x-www-form-urlencoded" },
   });
-  if (r.refresh_token && r.refresh_token !== env("CONTAAZUL_REFRESH_TOKEN")) console.warn("Conta Azul devolveu novo refresh_token; atualize o segredo CONTAAZUL_REFRESH_TOKEN");
+  if (r.refresh_token && r.refresh_token !== (await secret("HUB_CONTAAZUL_REFRESH_TOKEN"))) console.warn("Conta Azul devolveu novo refresh_token; atualize o segredo CONTAAZUL_REFRESH_TOKEN");
   return r.access_token;
 }
 

@@ -1,12 +1,12 @@
 // Google Ads API (GAQL via REST searchStream) → hub.ad_spend_daily
-import { db, env, fetchJson, round2, withRun, window } from "../_shared/hub.ts";
+import { db, env, fetchJson, round2, withRun, window, secret } from "../_shared/hub.ts";
 
 const version = env("GOOGLE_ADS_API_VERSION", "v18");
 
 async function accessToken() {
   const body = new URLSearchParams({
-    client_id: env("GOOGLE_OAUTH_CLIENT_ID"), client_secret: env("GOOGLE_OAUTH_CLIENT_SECRET"),
-    refresh_token: env("GOOGLE_ADS_REFRESH_TOKEN"), grant_type: "refresh_token",
+    client_id: (await secret("HUB_GOOGLE_OAUTH_CLIENT_ID")), client_secret: (await secret("HUB_GOOGLE_OAUTH_CLIENT_SECRET")),
+    refresh_token: (await secret("HUB_GOOGLE_ADS_REFRESH_TOKEN")), grant_type: "refresh_token",
   });
   const r = await fetchJson<{ access_token: string }>("https://oauth2.googleapis.com/token", { method: "POST", body, headers: { "content-type": "application/x-www-form-urlencoded" } });
   return r.access_token;
@@ -26,9 +26,9 @@ Deno.serve((req) =>
       const query = `SELECT campaign.id, campaign.name, segments.date, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.conversions_value
         FROM campaign WHERE segments.date BETWEEN '${from}' AND '${to}' AND metrics.cost_micros > 0`;
       const headers: Record<string, string> = {
-        authorization: `Bearer ${token}`, "developer-token": env("GOOGLE_ADS_DEVELOPER_TOKEN"), "content-type": "application/json",
+        authorization: `Bearer ${token}`, "developer-token": (await secret("HUB_GOOGLE_ADS_DEVELOPER_TOKEN")), "content-type": "application/json",
       };
-      const login = Deno.env.get("GOOGLE_ADS_LOGIN_CUSTOMER_ID");
+      const login = Deno.env.get("HUB_GOOGLE_ADS_LOGIN_CUSTOMER_ID");
       if (login) headers["login-customer-id"] = login.replace(/-/g, "");
       const chunks = await fetchJson<{ results?: Row[] }[]>(`https://googleads.googleapis.com/${version}/customers/${customerId}/googleAds:searchStream`, { method: "POST", headers, body: JSON.stringify({ query }) });
       for (const c of chunks) for (const r of c.results ?? []) {

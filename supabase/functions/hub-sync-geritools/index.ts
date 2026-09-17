@@ -1,9 +1,10 @@
 // GeriTools (Supabase próprio) → hub.subscriptions + hub.enrollments (source geritools)
 // Lê o banco do GeriTools com a service-role dele. Ajuste os nomes de tabela/coluna à realidade do projeto.
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { db, env, productIdFor, upsertCustomer, withRun } from "../_shared/hub.ts";
+import { db, productIdFor, upsertCustomer, withRun } from "../_shared/hub.ts";
 
-const geri = createClient(env("GERITOOLS_SUPABASE_URL"), env("GERITOOLS_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
+// O GeriTools vive no MESMO projeto Supabase do hub: usa as variáveis nativas da função.
+const geri = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
 Deno.serve((req) =>
   withRun("geritools", req, async () => {

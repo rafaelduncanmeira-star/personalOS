@@ -1,8 +1,8 @@
 // Meta Marketing API (Insights por campanha/dia) → hub.ad_spend_daily
-import { db, env, fetchJson, productIdFor, round2, withRun, window } from "../_shared/hub.ts";
+import { db, env, fetchJson, productIdFor, round2, withRun, window, secret } from "../_shared/hub.ts";
 
 type Row = { campaign_id: string; campaign_name: string; date_start: string; spend: string; impressions: string; clicks: string; actions?: { action_type: string; value: string }[]; action_values?: { action_type: string; value: string }[] };
-const token = env("META_ACCESS_TOKEN");
+const token = (await secret("HUB_META_ACCESS_TOKEN"));
 const version = env("META_API_VERSION", "v20.0");
 const leadTypes = new Set(["lead", "onsite_conversion.lead_grouped", "offsite_conversion.fb_pixel_lead", "onsite_conversion.messaging_conversation_started_7d"]);
 const purchaseTypes = new Set(["purchase", "offsite_conversion.fb_pixel_purchase", "omni_purchase"]);
