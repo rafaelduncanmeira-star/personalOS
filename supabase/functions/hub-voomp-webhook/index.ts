@@ -1,7 +1,7 @@
 // Webhook da Voomp Creators (vendas das pós-graduações) → hub.orders (source vump)
 // O payload da Voomp não é documentado publicamente: este handler guarda o evento bruto sempre
 // e tenta os nomes de campo mais comuns; ajustar após o primeiro evento real (ver hub.orders.raw).
-import { db, env, json, productIdFor, round2, upsertCustomer } from "../_shared/hub.ts";
+import { db, json, productIdFor, round2, secret, upsertCustomer } from "../_shared/hub.ts";
 
 type Any = Record<string, any>;
 const pick = (o: Any, ...paths: string[]) => {
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   const u = new URL(req.url);
   const token = u.searchParams.get("token") ?? req.headers.get("x-voomp-token") ?? req.headers.get("token");
-  if (token !== env("VOOMP_WEBHOOK_SECRET")) return json({ error: "unauthorized" }, 401);
+  if (token !== (await secret("VOOMP_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
   const body = (await req.json()) as Any;
   try {
     const sale = body.data ?? body.sale ?? body.transaction ?? body;

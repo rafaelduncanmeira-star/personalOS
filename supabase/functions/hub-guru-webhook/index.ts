@@ -1,8 +1,8 @@
 // Webhook da Digital Manager Guru (vendas e assinaturas) → hub.orders / hub.order_deductions / hub.subscriptions
 // Configurar na Guru: Configurações → Webhooks, todos os status, URL:
-//   https://<projeto>.supabase.co/functions/v1/guru-webhook?token=<GURU_WEBHOOK_SECRET>
+//   https://<projeto>.supabase.co/functions/v1/hub-guru-webhook?token=<GURU_WEBHOOK_SECRET>
 // A Guru não assina o payload; o segredo na URL é a validação.
-import { db, env, json, productIdFor, round2, upsertCustomer } from "../_shared/hub.ts";
+import { db, json, productIdFor, round2, secret, upsertCustomer } from "../_shared/hub.ts";
 
 type Any = Record<string, any>;
 
@@ -80,7 +80,7 @@ async function handleSubscription(s: Any) {
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
-  if (new URL(req.url).searchParams.get("token") !== env("GURU_WEBHOOK_SECRET")) return json({ error: "unauthorized" }, 401);
+  if (new URL(req.url).searchParams.get("token") !== (await secret("GURU_WEBHOOK_SECRET"))) return json({ error: "unauthorized" }, 401);
   const body = (await req.json()) as Any;
   try {
     const kind = body.webhook_type ?? (body.subscription_code ? "subscription" : "transaction");

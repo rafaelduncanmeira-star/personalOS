@@ -13,6 +13,19 @@ export const env = (k: string, fallback?: string) => {
   return v;
 };
 
+/**
+ * Segredo de integração: variável de ambiente da função ou, na falta dela, o Supabase Vault
+ * (função public.hub_secret, só executável pela service role). Permite cadastrar chaves por SQL.
+ */
+export async function secret(name: string): Promise<string> {
+  const fromEnv = Deno.env.get(name);
+  if (fromEnv) return fromEnv;
+  const { data, error } = await db.schema("public").rpc("hub_secret", { p_name: name });
+  if (error) throw new Error(`segredo ${name}: ${error.message}`);
+  if (!data) throw new Error(`segredo ${name} não cadastrado (Vault)`);
+  return String(data);
+}
+
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 

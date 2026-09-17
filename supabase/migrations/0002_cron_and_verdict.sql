@@ -86,13 +86,13 @@ end $$;
 do $do$
 begin
   if exists (select 1 from pg_extension where extname = 'pg_cron') then
-    perform cron.schedule('hub-sync-asaas',      '15 * * * *',  $$select hub.call_function('sync-asaas')$$);
-    perform cron.schedule('hub-sync-meta',       '20 * * * *',  $$select hub.call_function('sync-meta')$$);
-    perform cron.schedule('hub-sync-google',     '25 * * * *',  $$select hub.call_function('sync-google-ads')$$);
-    perform cron.schedule('hub-sync-curseduca',  '30 */2 * * *',$$select hub.call_function('sync-curseduca')$$);
-    perform cron.schedule('hub-sync-geritools',  '35 */2 * * *',$$select hub.call_function('sync-geritools')$$);
-    perform cron.schedule('hub-sync-clint',      '40 * * * *',  $$select hub.call_function('sync-clint')$$);
-    perform cron.schedule('hub-sync-contaazul',  '0 6 * * *',   $$select hub.call_function('sync-contaazul')$$);
+    perform cron.schedule('hub-sync-asaas',      '15 * * * *',  $$select hub.call_function('hub-sync-asaas')$$);
+    perform cron.schedule('hub-sync-meta',       '20 * * * *',  $$select hub.call_function('hub-sync-meta')$$);
+    perform cron.schedule('hub-sync-google',     '25 * * * *',  $$select hub.call_function('hub-sync-google-ads')$$);
+    perform cron.schedule('hub-sync-curseduca',  '30 */2 * * *',$$select hub.call_function('hub-sync-curseduca')$$);
+    perform cron.schedule('hub-sync-geritools',  '35 */2 * * *',$$select hub.call_function('hub-sync-geritools')$$);
+    perform cron.schedule('hub-sync-clint',      '40 * * * *',  $$select hub.call_function('hub-sync-clint')$$);
+    perform cron.schedule('hub-sync-contaazul',  '0 6 * * *',   $$select hub.call_function('hub-sync-contaazul')$$);
     perform cron.schedule('hub-daily-verdict',   '0 7 * * *',   $$select hub.generate_daily_verdict()$$); -- 04h São Paulo
   end if;
 end $do$;

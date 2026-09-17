@@ -1,22 +1,22 @@
 # Webhooks externos não trazem JWT do Supabase: validam por segredo na URL.
-[functions.guru-webhook]
+[functions.hub-guru-webhook]
 verify_jwt = false
 
-[functions.voomp-webhook]
+[functions.hub-voomp-webhook]
 verify_jwt = false
 
 # Sincronizações são chamadas pelo pg_cron com a chave anon (JWT válido).
-[functions.sync-asaas]
+[functions.hub-sync-asaas]
 verify_jwt = true
-[functions.sync-curseduca]
+[functions.hub-sync-curseduca]
 verify_jwt = true
-[functions.sync-clint]
+[functions.hub-sync-clint]
 verify_jwt = true
-[functions.sync-meta]
+[functions.hub-sync-meta]
 verify_jwt = true
-[functions.sync-google-ads]
+[functions.hub-sync-google-ads]
 verify_jwt = true
-[functions.sync-contaazul]
+[functions.hub-sync-contaazul]
 verify_jwt = true
-[functions.sync-geritools]
+[functions.hub-sync-geritools]
 verify_jwt = true

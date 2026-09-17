@@ -2,15 +2,15 @@
 
 | Função | Fonte → destino | Gatilho |
 |---|---|---|
-| `guru-webhook` | Guru → `orders`, `order_deductions`, `subscriptions` | webhook da Guru (vendas + assinaturas) |
-| `voomp-webhook` | Voomp → `orders` (pós-graduação) | webhook por produto na Voomp |
-| `sync-asaas` | Asaas → `payments` | pg_cron, a cada hora |
-| `sync-curseduca` | Curseduca → `enrollments` | pg_cron, a cada 2h |
-| `sync-geritools` | GeriTools (Supabase) → `subscriptions`, `enrollments` | pg_cron, a cada 2h |
-| `sync-clint` | Clint → `pipelines`, `pipeline_stages`, `deals`, `deal_stage_events`, `leads` | pg_cron, a cada hora |
-| `sync-meta` | Meta Insights → `ad_spend_daily` | pg_cron, a cada hora |
-| `sync-google-ads` | Google Ads → `ad_spend_daily` | pg_cron, a cada hora |
-| `sync-contaazul` | Conta Azul → `cost_entries` | pg_cron, diário 06h UTC |
+| `hub-guru-webhook` | Guru → `orders`, `order_deductions`, `subscriptions` | webhook da Guru (vendas + assinaturas) |
+| `hub-voomp-webhook` | Voomp → `orders` (pós-graduação) | webhook por produto na Voomp |
+| `hub-sync-asaas` | Asaas → `payments` | pg_cron, a cada hora |
+| `hub-sync-curseduca` | Curseduca → `enrollments` | pg_cron, a cada 2h |
+| `hub-sync-geritools` | GeriTools (Supabase) → `subscriptions`, `enrollments` | pg_cron, a cada 2h |
+| `hub-sync-clint` | Clint → `pipelines`, `pipeline_stages`, `deals`, `deal_stage_events`, `leads` | pg_cron, a cada hora |
+| `hub-sync-meta` | Meta Insights → `ad_spend_daily` | pg_cron, a cada hora |
+| `hub-sync-google-ads` | Google Ads → `ad_spend_daily` | pg_cron, a cada hora |
+| `hub-sync-contaazul` | Conta Azul → `cost_entries` | pg_cron, diário 06h UTC |
 
 Todas aceitam `?from=YYYY-MM-DD&to=YYYY-MM-DD` para backfill e registram em `hub.sync_runs`.
 
