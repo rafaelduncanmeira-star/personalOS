@@ -10,14 +10,16 @@ Por favor, envie cada item por um canal seguro (1Password, Bitwarden ou mensagem
 
 **1. Digital Manager Guru (checkout)**
 - Gerar um token de API em *Meu Perfil → Tokens API* e me enviar.
-- Confirmar que posso cadastrar dois webhooks em *Configurações → Webhooks* (um de vendas, um de assinaturas, com todos os status marcados). Eu passo a URL.
+- Cadastrar dois webhooks em *Configurações → Webhooks*: um de **Vendas** e um de **Assinaturas**, os dois com todos os status marcados e com esta mesma URL:
+  `https://ogwepzrwmywnubfgndpn.supabase.co/functions/v1/hub-guru-webhook?token=guru_ef9R29J1B7GKTVBG-8dKeSce9ntNdujLT72ih_L_`
 - Lista dos produtos cadastrados na Guru com o ID de cada um (tela de Produtos).
 
 **2. Asaas (meio de pagamento)**
 - Chave de API da conta principal (*Integrações → API*). Se der para criar uma chave só de leitura, melhor.
 
 **3. Voomp / Anhanguera (pós-graduações)**
-- Nos produtos das duas pós, cadastrar um webhook em *Produtos → Editar → Entregas → Adicionar entrega → Webhook*, com todos os eventos. Eu passo a URL e o token.
+- Nos produtos das duas pós, cadastrar um webhook em *Produtos → Editar → Entregas → Adicionar entrega → Webhook*, com todos os eventos, apontando para:
+  `https://ogwepzrwmywnubfgndpn.supabase.co/functions/v1/hub-voomp-webhook?token=voomp_lUZM2QAu2UFT-SJ_IXuCk1IK8TmkiPKYPoRT9g36`
 - Um extrato de repasse recente (o relatório que mostra vendas, taxas e valor líquido recebido), em planilha ou PDF.
 - O percentual de participação da Anhanguera e da Voomp previsto no contrato.
 
