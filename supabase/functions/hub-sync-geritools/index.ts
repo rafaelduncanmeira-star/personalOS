@@ -1,36 +1,31 @@
-// GeriTools (Supabase próprio) → hub.subscriptions + hub.enrollments (source geritools)
-// Lê o banco do GeriTools com a service-role dele. Ajuste os nomes de tabela/coluna à realidade do projeto.
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { db, productIdFor, upsertCustomer, withRun } from "../_shared/hub.ts";
+// GeriTools / GeriUpdates (mesmo projeto Supabase) → hub.enrollments
+// A fonte é shared.app_access: uma assinatura do GeriUpdates (via Guru) libera todos os apps GeriClass.
+// origin = 'geriupdates' → produto GeriUpdates; demais origens → GeriTools. Assinaturas (MRR) vêm do webhook da Guru.
+import { productIdFor, sql, upsert, upsertCustomer, withRun } from "../_shared/hub.ts";
 
-// O GeriTools vive no MESMO projeto Supabase do hub: usa as variáveis nativas da função.
-const geri = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+type Access = { auth_user_id: string; email: string | null; full_name: string | null; role: string | null; active: boolean;
+  access_until: string | null; origin: string | null; guru_status: string | null; created_at: string | null; updated_at: string | null };
 
 Deno.serve((req) =>
   withRun("geritools", req, async () => {
-    const productId = await productIdFor("geritools", "geritools");
-    if (!productId) throw new Error("mapeie o produto GeriTools em hub.product_source_refs (source geritools, external_id geritools)");
-    // Esperado: tabela `subscriptions` com user_id, status, plan, price, current_period_end, created_at, canceled_at
-    // e `profiles` com id, email, full_name. Ajustar se o schema do GeriTools for outro.
-    const { data: subs, error } = await geri.from("subscriptions").select("id, user_id, status, plan, price, interval, created_at, canceled_at, current_period_end, profiles(email, full_name)");
-    if (error) throw error;
-    let rows = 0;
-    for (const s of subs ?? []) {
-      const p = (s as any).profiles ?? {};
-      const customerId = await upsertCustomer({ email: p.email, name: p.full_name, source: "geritools", external_id: s.user_id });
-      const active = ["active", "trialing", "past_due"].includes(String(s.status));
-      await db.from("subscriptions").upsert({
-        source: "geritools", external_id: String(s.id), product_id: productId, customer_id: customerId,
-        status: s.status === "trialing" ? "trial" : s.status === "past_due" ? "past_due" : active ? "active" : "canceled",
-        interval: s.interval === "year" ? "annual" : "monthly", amount: Number(s.price ?? 0),
-        started_at: s.created_at, canceled_at: s.canceled_at ?? null, ended_at: !active ? s.current_period_end ?? s.canceled_at ?? null : null, raw: s,
-      }, { onConflict: "source,external_id" });
-      await db.from("enrollments").upsert({
-        source: "geritools", external_id: String(s.id), product_id: productId, customer_id: customerId,
-        status: active ? "active" : "expired", access_start: String(s.created_at).slice(0, 10),
-        access_end: s.current_period_end ? String(s.current_period_end).slice(0, 10) : null, updated_at: new Date().toISOString(),
-      }, { onConflict: "source,external_id" });
-      rows++;
+    const geriupdates = await productIdFor("geritools", "geriupdates");
+    const geritools = await productIdFor("geritools", "geritools");
+    if (!geritools) throw new Error("mapeie o produto GeriTools em hub.product_source_refs (source geritools, external_id geritools)");
+    const rows = await sql<Access[]>`select auth_user_id, email, full_name, role, active, access_until::text, origin, guru_status,
+      created_at::text, updated_at::text from shared.app_access where email is not null`;
+    let n = 0;
+    for (const a of rows) {
+      const productId = (a.origin === "geriupdates" && geriupdates) ? geriupdates : geritools;
+      const customerId = await upsertCustomer({ email: a.email, name: a.full_name, source: "geritools", external_id: a.auth_user_id });
+      const expired = a.access_until ? new Date(a.access_until) < new Date() : false;
+      const status = !a.active ? "canceled" : expired ? "expired" : "active";
+      await upsert("enrollments", {
+        source: "geritools", external_id: a.auth_user_id, product_id: productId, customer_id: customerId, status,
+        access_start: (a.created_at ?? new Date().toISOString()).slice(0, 10),
+        access_end: a.access_until ? a.access_until.slice(0, 10) : null,
+        raw: { role: a.role, origin: a.origin, guru_status: a.guru_status }, updated_at: new Date().toISOString(),
+      }, ["source", "external_id"]);
+      n++;
     }
-    return rows;
+    return n;
   }));

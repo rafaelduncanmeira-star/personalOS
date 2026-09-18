@@ -1,5 +1,5 @@
 // Asaas → hub.payments (caixa). Janela: ?from&to (default últimos 3 dias, por data de pagamento e por data de criação).
-import { db, env, fetchJson, normEmail, productIdFor, round2, withRun, window, secret } from "../_shared/hub.ts";
+import { env, fetchJson, normEmail, productIdFor, round2, secret, sql, upsert, withRun, window } from "../_shared/hub.ts";
 
 type Payment = {
   id: string; customer: string; value: number; netValue: number; originalValue?: number | null; status: string;
@@ -7,8 +7,8 @@ type Payment = {
   installmentNumber?: number | null; externalReference?: string | null; subscription?: string | null; description?: string | null;
 };
 
-const base = env("ASAAS_BASE_URL", "https://api.asaas.com/v3");
-const headers = { access_token: (await secret("HUB_ASAAS_API_KEY")), accept: "application/json" };
+const base = env("HUB_ASAAS_BASE_URL", "https://api.asaas.com/v3");
+const headers = { access_token: await secret("HUB_ASAAS_API_KEY"), accept: "application/json" };
 const statusMap: Record<string, string> = {
   PENDING: "pending", RECEIVED: "received", CONFIRMED: "received", RECEIVED_IN_CASH: "received",
   OVERDUE: "overdue", REFUNDED: "refunded", REFUND_REQUESTED: "refunded", REFUND_IN_PROGRESS: "refunded",
@@ -37,19 +37,21 @@ async function* list(params: Record<string, string>) {
   }
 }
 
+type OrderRef = { id: string; product_id: string | null; customer_id: string | null };
+
 /** Liga o recebimento ao pedido: externalReference (id Guru) ou e-mail + valor da parcela + proximidade de data. */
-async function linkOrder(p: Payment, email: string | null) {
+async function linkOrder(p: Payment, email: string | null): Promise<OrderRef | null> {
   if (p.externalReference) {
-    const { data } = await db.from("orders").select("id, product_id, customer_id").eq("source", "guru").eq("external_id", p.externalReference).maybeSingle();
-    if (data) return data;
+    const [o] = await sql<OrderRef[]>`select id, product_id, customer_id from hub.orders where source = 'guru' and external_id = ${p.externalReference} limit 1`;
+    if (o) return o;
   }
   if (!email) return null;
-  const { data } = await db.from("orders")
-    .select("id, product_id, customer_id, gross_amount, discount_amount, installments, sold_at, customers!inner(email)")
-    .eq("customers.email", email).gte("sold_at", new Date(new Date(p.dueDate).getTime() - 400 * 86400_000).toISOString())
-    .order("sold_at", { ascending: false }).limit(20);
-  const target = p.value;
-  return (data ?? []).find((o: any) => Math.abs((o.gross_amount - o.discount_amount) / o.installments - target) < 1.5) ?? null;
+  const [o] = await sql<OrderRef[]>`
+    select o.id, o.product_id, o.customer_id from hub.orders o join hub.customers c on c.id = o.customer_id
+    where c.email = ${email} and o.sold_at >= ${p.dueDate}::date - interval '400 days'
+      and abs((o.gross_amount - o.discount_amount) / o.installments - ${p.value}) < 1.5
+    order by o.sold_at desc limit 1`;
+  return o ?? null;
 }
 
 Deno.serve((req) =>
@@ -69,18 +71,17 @@ Deno.serve((req) =>
         const order = await linkOrder(p, email);
         let customerId = order?.customer_id ?? null;
         if (!customerId && email) {
-          const { data } = await db.from("customers").select("id").eq("email", email).maybeSingle();
-          customerId = data?.id ?? null;
+          const [c] = await sql<{ id: string }[]>`select id from hub.customers where email = ${email}`;
+          customerId = c?.id ?? null;
         }
         const productId = order?.product_id ?? (await productIdFor("asaas", p.subscription ?? null));
-        const { error } = await db.from("payments").upsert({
+        await upsert("payments", {
           source: "asaas", external_id: p.id, order_id: order?.id ?? null, product_id: productId, customer_id: customerId,
           status: statusMap[p.status] ?? "pending", due_date: p.dueDate,
           paid_at: p.clientPaymentDate ?? p.paymentDate ?? null,
           gross_amount: round2(p.value), fee_amount: round2(p.value - p.netValue), net_amount: round2(p.netValue),
           installment_number: p.installmentNumber ?? null, payment_method: methodMap[p.billingType] ?? "other", raw: p,
-        }, { onConflict: "source,external_id" });
-        if (error) throw error;
+        }, ["source", "external_id"]);
         rows++;
       }
     }

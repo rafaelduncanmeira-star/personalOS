@@ -1,7 +1,7 @@
-// Webhook da Voomp Creators (vendas das pós-graduações) → hub.orders (source vump)
+// Geri Hub · webhook da Voomp Creators (vendas das pós-graduações) → hub.orders (source vump)
 // O payload da Voomp não é documentado publicamente: este handler guarda o evento bruto sempre
 // e tenta os nomes de campo mais comuns; ajustar após o primeiro evento real (ver hub.orders.raw).
-import { db, json, productIdFor, round2, secret, upsertCustomer } from "../_shared/hub.ts";
+import { errMsg, json, markIntegration, productIdFor, round2, secret, sql, upsert, upsertCustomer } from "../_shared/hub.ts";
 
 type Any = Record<string, any>;
 const pick = (o: Any, ...paths: string[]) => {
@@ -36,23 +36,24 @@ Deno.serve(async (req) => {
     const producerNet = pick(sale, "producer_value", "commission.value", "net_value", "creator_amount");
     const status = statusMap[String(pick(sale, "status", "event", "type") ?? "").toLowerCase()] ?? "pending";
     const soldAt = pick(sale, "approved_at", "created_at", "date", "paid_at") ?? new Date().toISOString();
-    const { data: order, error } = await db.from("orders").upsert({
+    const method = String(pick(sale, "payment_method", "payment.method") ?? "");
+    const order = await upsert("orders", {
       source: "vump", external_id: externalId, product_id: productId, customer_id: customerId, status, sold_at: soldAt,
       approved_at: status === "approved" ? pick(sale, "approved_at", "paid_at") ?? soldAt : null,
       gross_amount: round2(gross), installments: Number(pick(sale, "installments", "installments_number") ?? 1) || 1,
-      payment_method: /pix/i.test(String(pick(sale, "payment_method", "payment.method") ?? "")) ? "pix" : /bol/i.test(String(pick(sale, "payment_method", "payment.method") ?? "")) ? "boleto" : "credit_card",
+      payment_method: /pix/i.test(method) ? "pix" : /bol/i.test(method) ? "boleto" : "credit_card",
       raw: body,
-    }, { onConflict: "source,external_id" }).select("id").single();
-    if (error) throw error;
-    await db.from("order_deductions").delete().eq("order_id", order.id).eq("source", "vump");
+    }, ["source", "external_id"]);
+    await sql`delete from hub.order_deductions where order_id = ${order.id} and source = 'vump'`;
     if (producerNet != null && gross > Number(producerNet)) {
-      await db.from("order_deductions").insert({ order_id: order.id, kind: "fee_partner", amount: round2(gross - Number(producerNet)), occurred_at: soldAt, source: "vump", note: "Voomp + Anhanguera (bruto − repasse ao produtor)" });
+      await sql`insert into hub.order_deductions (order_id, kind, amount, occurred_at, source, note)
+        values (${order.id}, 'fee_partner', ${round2(gross - Number(producerNet))}, ${soldAt}, 'vump', 'Voomp + Anhanguera (bruto − repasse ao produtor)')`;
     }
-    await db.from("integrations").update({ last_success_at: new Date().toISOString(), last_error: null, enabled: true }).eq("source", "vump");
+    await markIntegration("vump", null);
     return json({ ok: true, id: order.id });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    await db.from("integrations").update({ last_error: msg }).eq("source", "vump");
+    const msg = errMsg(e);
+    await markIntegration("vump", msg);
     return json({ ok: false, error: msg }, 500);
   }
 });

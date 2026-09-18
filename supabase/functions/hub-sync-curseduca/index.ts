@@ -1,5 +1,5 @@
 // Curseduca → hub.enrollments (aluno ativo = situação ACTIVE + acesso vigente no grupo mapeado a um produto)
-import { db, env, fetchJson, productIdFor, upsertCustomer, withRun, secret } from "../_shared/hub.ts";
+import { env, fetchJson, productIdFor, secret, upsert, upsertCustomer, withRun } from "../_shared/hub.ts";
 
 type Group = { id: number | string; uuid: string; name: string; expirationType?: string | null; expirationInterval?: number | null };
 type MemberGroup = { uuid?: string; id?: number | string; name?: string; enteredAt?: string; expiresAt?: string | null; customExpirationDate?: string | null; createdAt?: string };
@@ -8,8 +8,8 @@ type Member = {
   lastLogin?: string | null; createdAt?: string; groups?: MemberGroup[]; mobileTelephone?: string | null;
 };
 
-const base = env("CURSEDUCA_BASE_URL", "https://prof.curseduca.pro"); // confirmar no Swagger da conta
-const headers = { api_key: (await secret("HUB_CURSEDUCA_API_KEY")), accept: "application/json" };
+const base = env("HUB_CURSEDUCA_BASE_URL", "https://prof.curseduca.pro"); // confirmar no Swagger da conta
+const headers = { api_key: await secret("HUB_CURSEDUCA_API_KEY"), accept: "application/json" };
 
 async function* members() {
   let offset = 0;
@@ -28,7 +28,7 @@ Deno.serve((req) =>
     const groups = await fetchJson<{ data?: Group[] } | Group[]>(`${base}/groups`, { headers });
     const groupList = Array.isArray(groups) ? groups : groups.data ?? [];
     const groupProduct = new Map<string, string | null>();
-    for (const g of groupList) groupProduct.set(String(g.uuid), await productIdFor("curseduca", g.uuid) ?? await productIdFor("curseduca", g.id));
+    for (const g of groupList) groupProduct.set(String(g.uuid), (await productIdFor("curseduca", g.uuid)) ?? (await productIdFor("curseduca", g.id)));
 
     let rows = 0;
     for await (const m of members()) {
@@ -40,13 +40,12 @@ Deno.serve((req) =>
         const accessEnd = g.customExpirationDate ?? g.expiresAt ?? null;
         const expired = accessEnd ? new Date(accessEnd) < new Date() : false;
         const status = m.situation === "BLOCKED" ? "blocked" : m.situation === "INACTIVE" ? "canceled" : expired ? "expired" : "active";
-        const { error } = await db.from("enrollments").upsert({
+        await upsert("enrollments", {
           source: "curseduca", external_id: `${m.id}:${key}`, product_id: productId, customer_id: customerId, status,
           access_start: (g.enteredAt ?? g.createdAt ?? m.createdAt ?? new Date().toISOString()).slice(0, 10),
           access_end: accessEnd ? accessEnd.slice(0, 10) : null, last_access_at: m.lastLogin ?? null,
           raw: { member: { id: m.id, situation: m.situation }, group: g }, updated_at: new Date().toISOString(),
-        }, { onConflict: "source,external_id" });
-        if (error) throw error;
+        }, ["source", "external_id"]);
         rows++;
       }
     }
