@@ -41,10 +41,7 @@ Por favor, envie cada item por um canal seguro (1Password, Bitwarden ou mensagem
 - Confirmar que o financeiro está no Conta Azul e quem é o usuário administrador. Vou cadastrar um aplicativo no portal de desenvolvedores e esse usuário precisa autorizar uma única vez.
 - Exportar a lista de categorias de despesa usadas hoje.
 
-**9. GeriTools**
-- Nada a providenciar; já temos o acesso ao banco.
-
-**10. Dados internos para a DRE**
+**9. Dados internos para a DRE**
 - Planilha da equipe: nome, área, custo mensal total (salário ou PJ + encargos) e em qual produto cada pessoa trabalha, com percentual quando for mais de um.
 - Com o contador: alíquota de ISS do município e como o repasse da Voomp está sendo declarado.
 

@@ -28,7 +28,7 @@ Depois: `insert into hub.cron_config (key, value) values ('functions_url', 'http
 
 ## Mapeamentos obrigatórios (uma vez)
 
-- `hub.product_source_refs`: id do produto na Guru, uuid do grupo de acesso na Curseduca, id do produto na Voomp, `geritools` para o GeriTools.
+- `hub.product_source_refs`: id do produto na Guru, uuid do grupo de acesso na Curseduca, id do produto na Voomp (o GeriTools entra como produto da Guru, sem ref própria).
 - `hub.ad_accounts`: contas Meta (`act_…`) e Google (customer id) com o produto de cada uma; `hub.campaign_product_rules` quando uma conta serve vários produtos.
 - `hub.users`: e-mails de quem pode entrar e o papel; vendedores do Clint são ligados por e-mail.
 
