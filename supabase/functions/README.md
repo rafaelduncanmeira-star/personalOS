@@ -6,7 +6,6 @@
 | `hub-voomp-webhook` | Voomp → `orders` (pós-graduação) | webhook por produto na Voomp |
 | `hub-sync-asaas` | Asaas → `payments` | pg_cron, a cada hora |
 | `hub-sync-curseduca` | Curseduca → `enrollments` | pg_cron, a cada 2h |
-| `hub-sync-geritools` | GeriTools (Supabase) → `subscriptions`, `enrollments` | pg_cron, a cada 2h |
 | `hub-sync-clint` | Clint → `pipelines`, `pipeline_stages`, `deals`, `deal_stage_events`, `leads` | pg_cron, a cada hora |
 | `hub-sync-meta` | Meta Insights → `ad_spend_daily` | pg_cron, a cada hora |
 | `hub-sync-google-ads` | Google Ads → `ad_spend_daily` | pg_cron, a cada hora |

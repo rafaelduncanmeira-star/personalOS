@@ -8,7 +8,7 @@ Levantamento feito em 15/09/2026 sobre a documentação pública. Itens marcados
 | **Asaas** | Recebimentos (caixa), taxas reais, parcelas, estornos | API (sincronização horária) | `access_token` da conta | Pronto para conectar |
 | **Voomp (Cogna/Anhanguera)** | Vendas e repasses das pós-graduações | Webhook por produto + importação do extrato | Painel do produtor | Webhook existe; extrato de repasse **[confirmar formato]** |
 | **Curseduca** | Alunos ativos (acesso vigente), progresso | API (sincronização horária) | Header `api_key` gerado no painel | Pronto para conectar |
-| **GeriTools (Supabase)** | Usuários e assinaturas do software | Leitura direta no banco | Chave service-role do projeto | Pronto (mesmo ecossistema) |
+| **GeriTools** | Produto do painel; vendas e assinaturas chegam pela Guru | (via Guru) | — | Sem integração própria |
 | **Clint CRM** | Funil, negócios, vendedores, motivos de perda | API (sincronização horária) | Header `api-token`, **só no plano Elite** | **[confirmar plano]** |
 | **Meta Ads** | Investimento, cliques, leads e compras por campanha/dia | Marketing API (Insights) | Token de sistema + `act_id` | Pronto para conectar |
 | **Google Ads** | Idem Meta | Google Ads API (GAQL) | Developer token + OAuth refresh token | Pedir developer token (aprovação Google) |
@@ -54,9 +54,9 @@ Levantamento feito em 15/09/2026 sobre a documentação pública. Itens marcados
 - Endpoints usados: `GET /members` (com `situation` ACTIVE/INACTIVE/BLOCKED, `lastLogin`, `groups`), `GET /groups`, `GET /groups/{groupId}/members`, filtros `enteredSince/enteredUntil`, `expiresSince/expiresUntil`, `customExpirationDate`; relatórios `GET /api/reports/enrollments` e `GET /reports/progress`.
 - Como o hub usa: cada membro × grupo de acesso vira `hub.enrollments` (aluno ativo = `situation = ACTIVE` e data de expiração no futuro ou nula). Grupo de acesso ↔ produto via `hub.product_source_refs (source = curseduca)`.
 
-## GeriTools (Supabase)
+## GeriTools
 
-- O hub lê direto do banco do GeriTools (tabelas de perfis e assinaturas) com uma chave service-role guardada nas variáveis da função de sincronização. Mapeia usuários com assinatura vigente para `hub.enrollments` e `hub.subscriptions` (source `geritools`).
+- É um produto do painel como os outros: vendas e assinaturas (MRR, churn) chegam pelo webhook da Guru. Não há integração com o software em si.
 
 ## Clint CRM
 

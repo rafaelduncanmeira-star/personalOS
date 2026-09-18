@@ -18,5 +18,4 @@ verify_jwt = true
 verify_jwt = true
 [functions.hub-sync-contaazul]
 verify_jwt = true
-[functions.hub-sync-geritools]
 verify_jwt = true

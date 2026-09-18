@@ -90,7 +90,6 @@ begin
     perform cron.schedule('hub-sync-meta',       '20 * * * *',  $$select hub.call_function('hub-sync-meta')$$);
     perform cron.schedule('hub-sync-google',     '25 * * * *',  $$select hub.call_function('hub-sync-google-ads')$$);
     perform cron.schedule('hub-sync-curseduca',  '30 */2 * * *',$$select hub.call_function('hub-sync-curseduca')$$);
-    perform cron.schedule('hub-sync-geritools',  '35 */2 * * *',$$select hub.call_function('hub-sync-geritools')$$);
     perform cron.schedule('hub-sync-clint',      '40 * * * *',  $$select hub.call_function('hub-sync-clint')$$);
     perform cron.schedule('hub-sync-contaazul',  '0 6 * * *',   $$select hub.call_function('hub-sync-contaazul')$$);
     perform cron.schedule('hub-daily-verdict',   '0 7 * * *',   $$select hub.generate_daily_verdict()$$); -- 04h São Paulo
